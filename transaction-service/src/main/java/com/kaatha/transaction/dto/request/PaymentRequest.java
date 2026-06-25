@@ -24,4 +24,6 @@ public class PaymentRequest {
     private BigDecimal amount;
 
     private String notes;
+
+    private String paymentMethod;
 }

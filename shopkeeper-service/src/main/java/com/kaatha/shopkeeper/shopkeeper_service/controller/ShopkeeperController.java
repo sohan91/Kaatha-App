@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/shopkeepers")
 @RequiredArgsConstructor
@@ -69,6 +71,24 @@ public class ShopkeeperController {
                         .build()
         );
     }
+    @GetMapping("/check-phone/{phoneNumber}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkPhoneForRegistration(
+            @PathVariable String phoneNumber) {
+
+        boolean exists = shopkeeperService.existsByPhoneNumber(phoneNumber);
+
+        return ResponseEntity.ok(
+                ApiResponse.<Map<String, Object>>builder()
+                        .success(true)
+                        .message(exists ? "Phone already registered" : "Phone available")
+                        .data(Map.of(
+                                "exists", exists,
+                                "redirectToLogin", exists
+                        ))
+                        .build()
+        );
+    }
+
     @GetMapping("/phone/{phoneNumber}")
     public ResponseEntity<Boolean> existsByPhoneNumber(
             @PathVariable String phoneNumber) {

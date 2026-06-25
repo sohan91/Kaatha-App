@@ -1,6 +1,5 @@
 package com.kaatha.auth_service.dto.request;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 

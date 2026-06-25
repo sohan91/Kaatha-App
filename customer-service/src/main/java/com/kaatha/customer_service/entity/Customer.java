@@ -11,8 +11,8 @@ import lombok.experimental.SuperBuilder;
         name = "customer",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_customer_phone",
-                        columnNames = "phone_number"
+                        name = "uk_shopkeeper_customer_phone",
+                        columnNames = {"shopkeeper_id", "phone_number"}
                 )
         }
 )
@@ -26,6 +26,9 @@ public class Customer extends PersonEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "shopkeeper_id", nullable = false)
+    private Long shopkeeperId;
 
     @Column(name = "address")
     private String address;

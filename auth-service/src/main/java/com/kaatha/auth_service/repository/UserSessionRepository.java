@@ -6,9 +6,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+
 @Repository
-public interface UserSessionRepository
-        extends JpaRepository<UserSession, Long> {
+public interface UserSessionRepository extends JpaRepository<UserSession, Long> {
 
     List<UserSession> findByPhoneNumberAndActiveTrue(String phoneNumber);
+
+    Optional<UserSession> findFirstByPhoneNumberAndActiveTrueOrderByLoginTimeDesc(String phoneNumber);
 }

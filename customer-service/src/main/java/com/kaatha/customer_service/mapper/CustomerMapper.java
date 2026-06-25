@@ -12,6 +12,7 @@ public class CustomerMapper {
     public Customer toEntity(RegisterCustomerRequest request) {
 
         return Customer.builder()
+                .shopkeeperId(request.getShopkeeperId())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .phoneNumber(request.getPhoneNumber())
@@ -26,6 +27,7 @@ public class CustomerMapper {
 
         return CustomerResponse.builder()
                 .id(customer.getId())
+                .shopkeeperId(customer.getShopkeeperId())
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
                 .phoneNumber(customer.getPhoneNumber())

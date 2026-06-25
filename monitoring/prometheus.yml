@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'kaatha-services'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'auth-service:8083'
+          - 'shopkeeper-service:8081'
+          - 'customer-service:8082'
+          - 'item-service:8084'
+          - 'transaction-service:8085'
+          - 'ledger-service:8086'
+          - 'notification-service:8087'
+          - 'payment-service:8088'
+          - 'invoice-service:8089'
+          - 'report-service:8090'
+          - 'api-gateway:8080'

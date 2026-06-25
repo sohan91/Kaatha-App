@@ -1,5 +1,6 @@
 package com.kaatha.auth_service.controller;
 
+import com.kaatha.auth_service.dto.request.RefreshTokenRequest;
 import com.kaatha.auth_service.dto.request.SendOtpRequest;
 import com.kaatha.auth_service.dto.request.VerifyOtpRequest;
 import com.kaatha.auth_service.dto.response.ApiResponse;
@@ -72,6 +73,19 @@ public class AuthController {
 //            );
 //        }
 //    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(
+            @RequestBody RefreshTokenRequest request) {
+
+        LoginResponse response = authService.refreshToken(request);
+
+        return ResponseEntity.ok(ApiResponse.<LoginResponse>builder()
+                .success(true)
+                .message("Token refreshed")
+                .data(response)
+                .build());
+    }
 
     @PostMapping("/logout/{phoneNumber}")
     public ResponseEntity<ApiResponse<String>> logout(@PathVariable String phoneNumber) {

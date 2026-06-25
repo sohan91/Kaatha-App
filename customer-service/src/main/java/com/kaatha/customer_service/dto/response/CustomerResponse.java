@@ -11,6 +11,8 @@ public class CustomerResponse {
 
     private Long id;
 
+    private Long shopkeeperId;
+
     private String firstName;
 
     private String lastName;

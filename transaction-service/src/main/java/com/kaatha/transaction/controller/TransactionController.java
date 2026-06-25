@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/transactions")
@@ -70,5 +71,14 @@ public class TransactionController {
                         .data(response)
                         .build()
         );
+    @GetMapping("/shopkeeper/{shopkeeperId}/today-collections")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getTodayCollections(
+            @PathVariable Long shopkeeperId) {
+
+        return ResponseEntity.ok(ApiResponse.<Map<String, Object>>builder()
+                .success(true)
+                .message("Today's collections fetched")
+                .data(transactionService.getTodayCollections(shopkeeperId))
+                .build());
     }
 }

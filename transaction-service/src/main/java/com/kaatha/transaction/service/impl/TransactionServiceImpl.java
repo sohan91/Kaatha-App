@@ -1,12 +1,11 @@
 package com.kaatha.transaction.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kaatha.transaction.dto.request.*;
 import com.kaatha.transaction.dto.response.*;
 import com.kaatha.transaction.entity.Transaction;
 import com.kaatha.transaction.entity.TransactionItem;
-import com.kaatha.transaction.feign.ItemClient;
-import com.kaatha.transaction.feign.LedgerClient;
-import com.kaatha.transaction.feign.NotificationClient;
+import com.kaatha.transaction.feign.*;
 import com.kaatha.transaction.mapper.TransactionMapper;
 import com.kaatha.transaction.repository.TransactionItemRepository;
 import com.kaatha.transaction.repository.TransactionRepository;
@@ -17,10 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,10 +30,13 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final TransactionItemRepository itemRepository;
     private final TransactionMapper transactionMapper;
-
     private final ItemClient itemClient;
     private final LedgerClient ledgerClient;
     private final NotificationClient notificationClient;
+    private final CustomerClient customerClient;
+    private final ShopkeeperClient shopkeeperClient;
+    private final InvoiceClient invoiceClient;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -43,7 +45,6 @@ public class TransactionServiceImpl implements TransactionService {
                 .map(PurchaseItemRequest::getItemId)
                 .toList();
 
-        // 1. Fetch item details from Item Service
         ApiResponse<List<ItemResponse>> itemDetailsRes = itemClient.getItemsByIds(itemIds);
         if (itemDetailsRes == null || !itemDetailsRes.isSuccess() || itemDetailsRes.getData() == null) {
             throw new RuntimeException("Could not retrieve items from Item Service");
@@ -52,91 +53,83 @@ public class TransactionServiceImpl implements TransactionService {
         Map<Long, ItemResponse> itemMap = itemDetailsRes.getData().stream()
                 .collect(Collectors.toMap(ItemResponse::getId, item -> item));
 
-        BigDecimal totalAmount = BigDecimal.ZERO;
+        BigDecimal subtotal = BigDecimal.ZERO;
         List<StockUpdateRequest> stockUpdates = new ArrayList<>();
         List<TransactionItem> transactionItems = new ArrayList<>();
 
-        // 2. Validate items and compute subtotals
         for (PurchaseItemRequest itemReq : request.getItems()) {
             ItemResponse item = itemMap.get(itemReq.getItemId());
-            if (item == null) {
-                throw new RuntimeException("Item not found: ID " + itemReq.getItemId());
-            }
-            if (!item.isActive()) {
-                throw new RuntimeException("Item is inactive: " + item.getName());
-            }
-            if (!item.getShopkeeperId().equals(request.getShopkeeperId())) {
-                throw new RuntimeException("Item " + item.getName() + " does not belong to shopkeeper: " + request.getShopkeeperId());
-            }
-            if (item.getStockQuantity() < itemReq.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for item: " + item.getName() +
-                        ". Requested: " + itemReq.getQuantity() + ", Available: " + item.getStockQuantity());
-            }
+            validateItem(item, itemReq, request.getShopkeeperId());
 
             BigDecimal unitPrice = item.getPrice();
             BigDecimal discount = itemReq.getDiscount() != null ? itemReq.getDiscount() : BigDecimal.ZERO;
-            BigDecimal finalPrice = unitPrice.subtract(discount);
-            if (finalPrice.compareTo(BigDecimal.ZERO) < 0) {
-                finalPrice = BigDecimal.ZERO;
-            }
-            BigDecimal subtotal = finalPrice.multiply(BigDecimal.valueOf(itemReq.getQuantity()));
-            totalAmount = totalAmount.add(subtotal);
+            BigDecimal finalPrice = unitPrice.subtract(discount).max(BigDecimal.ZERO);
+            BigDecimal lineSubtotal = finalPrice.multiply(BigDecimal.valueOf(itemReq.getQuantity()));
+            subtotal = subtotal.add(lineSubtotal);
 
-            // Record transaction item details
             transactionItems.add(TransactionItem.builder()
                     .itemId(item.getId())
                     .itemName(item.getName())
                     .quantity(itemReq.getQuantity())
                     .unitPrice(unitPrice)
                     .discount(discount)
-                    .subtotal(subtotal)
+                    .subtotal(lineSubtotal)
                     .build());
 
-            // Prepare stock update request
             stockUpdates.add(StockUpdateRequest.builder()
                     .itemId(item.getId())
-                    .quantityChange(-itemReq.getQuantity()) // deduct stock
+                    .quantityChange(-itemReq.getQuantity())
                     .build());
         }
 
-        // 3. Save parent transaction
+        BigDecimal tax = request.getTax() != null ? request.getTax() : BigDecimal.ZERO;
+        BigDecimal discount = request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO;
+        BigDecimal finalAmount = subtotal.add(tax).subtract(discount).max(BigDecimal.ZERO);
+
+        String paymentStatus = request.getPaymentStatus() != null ? request.getPaymentStatus() : "PENDING";
+        String paymentMethod = request.getPaymentMethod() != null ? request.getPaymentMethod() : "CASH";
+        BigDecimal amountPaid = "PAID".equals(paymentStatus)
+                ? finalAmount
+                : (request.getAmountPaid() != null ? request.getAmountPaid() : BigDecimal.ZERO);
+        BigDecimal outstanding = finalAmount.subtract(amountPaid).max(BigDecimal.ZERO);
+
         Transaction transaction = Transaction.builder()
                 .shopkeeperId(request.getShopkeeperId())
                 .customerId(request.getCustomerId())
-                .amount(totalAmount)
+                .amount(finalAmount)
                 .type("PURCHASE")
+                .transactionNumber(generateTransactionNumber())
+                .subtotal(subtotal)
+                .tax(tax)
+                .discount(discount)
+                .finalAmount(finalAmount)
+                .amountPaid(amountPaid)
+                .outstandingAmount(outstanding)
+                .paymentStatus(paymentStatus)
+                .paymentMethod(paymentMethod)
                 .transactionDate(LocalDateTime.now())
                 .notes(request.getNotes())
                 .build();
         Transaction savedTx = transactionRepository.save(transaction);
 
-        // 4. Save transaction items linked to parent
         for (TransactionItem txItem : transactionItems) {
             txItem.setTransactionId(savedTx.getId());
         }
         List<TransactionItem> savedItems = itemRepository.saveAll(transactionItems);
 
-        // 5. Update stock in Item Service
         itemClient.updateStock(stockUpdates);
 
-        // 6. Update ledger balance in Ledger Service
-        ledgerClient.updateLedgerBalance(LedgerUpdateRequest.builder()
-                .shopkeeperId(request.getShopkeeperId())
-                .customerId(request.getCustomerId())
-                .amount(totalAmount)
-                .transactionType("PURCHASE")
-                .build());
-
-        // 7. Send notification (async/non-blocking for main transaction flow)
-        try {
-            notificationClient.sendNotification(NotificationRequest.builder()
-                    .recipientPhone("customer-phone") // in a real app, resolve customer phone first
-                    .message("You made a purchase on credit of Rs. " + totalAmount + " at Shop ID " + request.getShopkeeperId())
-                    .type("PAYMENT")
+        if (outstanding.compareTo(BigDecimal.ZERO) > 0) {
+            ledgerClient.updateLedgerBalance(LedgerUpdateRequest.builder()
+                    .shopkeeperId(request.getShopkeeperId())
+                    .customerId(request.getCustomerId())
+                    .amount(outstanding)
+                    .transactionType("PURCHASE")
                     .build());
-        } catch (Exception e) {
-            log.warn("Failed to send purchase notification", e);
         }
+
+        String customerPhone = resolveCustomerPhone(request.getCustomerId());
+        generateAndNotify(savedTx, savedItems, customerPhone);
 
         return transactionMapper.toResponse(savedTx, savedItems);
     }
@@ -144,18 +137,25 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionResponse recordPayment(PaymentRequest request) {
-        // 1. Save transaction
         Transaction transaction = Transaction.builder()
                 .shopkeeperId(request.getShopkeeperId())
                 .customerId(request.getCustomerId())
                 .amount(request.getAmount())
                 .type("PAYMENT")
+                .transactionNumber(generateTransactionNumber())
+                .subtotal(request.getAmount())
+                .tax(BigDecimal.ZERO)
+                .discount(BigDecimal.ZERO)
+                .finalAmount(request.getAmount())
+                .amountPaid(request.getAmount())
+                .outstandingAmount(BigDecimal.ZERO)
+                .paymentStatus("PAID")
+                .paymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "CASH")
                 .transactionDate(LocalDateTime.now())
                 .notes(request.getNotes())
                 .build();
         Transaction savedTx = transactionRepository.save(transaction);
 
-        // 2. Update ledger balance in Ledger Service
         ledgerClient.updateLedgerBalance(LedgerUpdateRequest.builder()
                 .shopkeeperId(request.getShopkeeperId())
                 .customerId(request.getCustomerId())
@@ -163,45 +163,146 @@ public class TransactionServiceImpl implements TransactionService {
                 .transactionType("PAYMENT")
                 .build());
 
-        // 3. Send notification
-        try {
-            notificationClient.sendNotification(NotificationRequest.builder()
-                    .recipientPhone("customer-phone")
-                    .message("Thank you! Payment of Rs. " + request.getAmount() + " received at Shop ID " + request.getShopkeeperId())
-                    .type("PAYMENT")
-                    .build());
-        } catch (Exception e) {
-            log.warn("Failed to send payment notification", e);
-        }
+        String customerPhone = resolveCustomerPhone(request.getCustomerId());
+        generateAndNotify(savedTx, null, customerPhone);
 
         return transactionMapper.toResponse(savedTx, null);
     }
 
     @Override
     public List<TransactionResponse> getTransactionsByCustomer(Long customerId) {
-        return transactionRepository.findByCustomerIdOrderByTransactionDateDesc(customerId)
-                .stream()
+        return mapTransactions(transactionRepository.findByCustomerIdOrderByTransactionDateDesc(customerId));
+    }
+
+    @Override
+    public List<TransactionResponse> getTransactionsByShopkeeper(Long shopkeeperId) {
+        return mapTransactions(transactionRepository.findByShopkeeperIdOrderByTransactionDateDesc(shopkeeperId));
+    }
+
+    @Override
+    public Map<String, Object> getTodayCollections(Long shopkeeperId) {
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
+        BigDecimal total = transactionRepository.sumTodayCollections(shopkeeperId, start, end);
+        return Map.of("shopkeeperId", shopkeeperId, "totalCollections", total);
+    }
+
+    private List<TransactionResponse> mapTransactions(List<Transaction> transactions) {
+        return transactions.stream()
                 .map(tx -> {
-                    List<TransactionItem> items = null;
-                    if ("PURCHASE".equals(tx.getType())) {
-                        items = itemRepository.findByTransactionId(tx.getId());
-                    }
+                    List<TransactionItem> items = "PURCHASE".equals(tx.getType())
+                            ? itemRepository.findByTransactionId(tx.getId())
+                            : null;
                     return transactionMapper.toResponse(tx, items);
                 })
                 .toList();
     }
 
-    @Override
-    public List<TransactionResponse> getTransactionsByShopkeeper(Long shopkeeperId) {
-        return transactionRepository.findByShopkeeperIdOrderByTransactionDateDesc(shopkeeperId)
-                .stream()
-                .map(tx -> {
-                    List<TransactionItem> items = null;
-                    if ("PURCHASE".equals(tx.getType())) {
-                        items = itemRepository.findByTransactionId(tx.getId());
-                    }
-                    return transactionMapper.toResponse(tx, items);
-                })
-                .toList();
+    private void validateItem(ItemResponse item, PurchaseItemRequest itemReq, Long shopkeeperId) {
+        if (item == null) {
+            throw new RuntimeException("Item not found: ID " + itemReq.getItemId());
+        }
+        if (!item.isActive()) {
+            throw new RuntimeException("Item is inactive: " + item.getName());
+        }
+        if (!item.getShopkeeperId().equals(shopkeeperId)) {
+            throw new RuntimeException("Item does not belong to shopkeeper: " + shopkeeperId);
+        }
+        if (item.getStockQuantity() < itemReq.getQuantity()) {
+            throw new RuntimeException("Insufficient stock for item: " + item.getName());
+        }
+    }
+
+    private String generateTransactionNumber() {
+        return "TXN-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase();
+    }
+
+    private String resolveCustomerPhone(Long customerId) {
+        try {
+            ApiResponse<Map<String, Object>> res = customerClient.getCustomer(customerId);
+            if (res != null && res.getData() != null) {
+                return String.valueOf(res.getData().get("phoneNumber"));
+            }
+        } catch (Exception e) {
+            log.warn("Could not resolve customer phone for id {}", customerId);
+        }
+        return null;
+    }
+
+    private void generateAndNotify(Transaction savedTx, List<TransactionItem> items, String customerPhone) {
+        try {
+            Map<String, Object> shopkeeper = Optional.ofNullable(
+                    shopkeeperClient.getShopkeeper(savedTx.getShopkeeperId()))
+                    .map(ApiResponse::getData)
+                    .orElse(Map.of());
+
+            Map<String, Object> customer = Optional.ofNullable(
+                    customerClient.getCustomer(savedTx.getCustomerId()))
+                    .map(ApiResponse::getData)
+                    .orElse(Map.of());
+
+            String itemsJson = items != null
+                    ? objectMapper.writeValueAsString(items.stream().map(i -> Map.of(
+                    "name", i.getItemName(),
+                    "qty", i.getQuantity(),
+                    "price", i.getUnitPrice())).toList())
+                    : "[]";
+
+            GenerateInvoiceRequest invoiceReq = new GenerateInvoiceRequest();
+            invoiceReq.setShopkeeperId(savedTx.getShopkeeperId());
+            invoiceReq.setCustomerId(savedTx.getCustomerId());
+            invoiceReq.setTransactionId(savedTx.getId());
+            invoiceReq.setShopName(String.valueOf(shopkeeper.getOrDefault("shopName", "Shop")));
+            invoiceReq.setShopAddress(buildAddress(shopkeeper));
+            invoiceReq.setShopPhone(String.valueOf(shopkeeper.getOrDefault("phoneNumber", "")));
+            invoiceReq.setCustomerName(customer.get("firstName") + " " + customer.getOrDefault("lastName", ""));
+            invoiceReq.setCustomerPhone(String.valueOf(customer.getOrDefault("phoneNumber", customerPhone)));
+            invoiceReq.setItemsJson(itemsJson);
+            invoiceReq.setSubtotal(savedTx.getSubtotal());
+            invoiceReq.setTax(savedTx.getTax());
+            invoiceReq.setDiscount(savedTx.getDiscount());
+            invoiceReq.setFinalAmount(savedTx.getFinalAmount());
+            invoiceReq.setAmountPaid(savedTx.getAmountPaid());
+            invoiceReq.setOutstandingAmount(savedTx.getOutstandingAmount());
+            invoiceReq.setPaymentMethod(savedTx.getPaymentMethod());
+            invoiceReq.setPaymentStatus(savedTx.getPaymentStatus());
+
+            ApiResponse<Map<String, Object>> invoiceRes = invoiceClient.generateInvoice(invoiceReq);
+            if (invoiceRes != null && invoiceRes.getData() != null) {
+                savedTx.setInvoiceNumber(String.valueOf(invoiceRes.getData().get("invoiceNumber")));
+                transactionRepository.save(savedTx);
+            }
+
+            String message = "Purchase".equals(savedTx.getType())
+                    ? "New purchase of Rs. " + savedTx.getFinalAmount() + ". Status: " + savedTx.getPaymentStatus()
+                    : "Payment of Rs. " + savedTx.getAmount() + " received. Thank you!";
+
+            if (customerPhone != null) {
+                notificationClient.sendNotification(NotificationRequest.builder()
+                        .recipientPhone(customerPhone)
+                        .message(message)
+                        .type("PAYMENT")
+                        .build());
+            }
+
+            String shopPhone = String.valueOf(shopkeeper.getOrDefault("phoneNumber", ""));
+            if (!shopPhone.isBlank()) {
+                notificationClient.sendNotification(NotificationRequest.builder()
+                        .recipientPhone(shopPhone)
+                        .message(message)
+                        .type("PAYMENT")
+                        .build());
+            }
+        } catch (Exception e) {
+            log.warn("Post-transaction invoice/notification failed", e);
+        }
+    }
+
+    private String buildAddress(Map<String, Object> shopkeeper) {
+        return String.join(", ",
+                String.valueOf(shopkeeper.getOrDefault("addressLine1", "")),
+                String.valueOf(shopkeeper.getOrDefault("city", "")),
+                String.valueOf(shopkeeper.getOrDefault("state", "")),
+                String.valueOf(shopkeeper.getOrDefault("pincode", "")));
     }
 }

@@ -14,9 +14,7 @@ public class TransactionMapper {
     public TransactionResponse toResponse(Transaction transaction, List<TransactionItem> items) {
         List<TransactionItemResponse> itemResponses = null;
         if (items != null) {
-            itemResponses = items.stream()
-                    .map(this::toResponse)
-                    .toList();
+            itemResponses = items.stream().map(this::toResponse).toList();
         }
 
         return TransactionResponse.builder()
@@ -25,6 +23,16 @@ public class TransactionMapper {
                 .customerId(transaction.getCustomerId())
                 .amount(transaction.getAmount())
                 .type(transaction.getType())
+                .transactionNumber(transaction.getTransactionNumber())
+                .invoiceNumber(transaction.getInvoiceNumber())
+                .subtotal(transaction.getSubtotal())
+                .tax(transaction.getTax())
+                .discount(transaction.getDiscount())
+                .finalAmount(transaction.getFinalAmount())
+                .amountPaid(transaction.getAmountPaid())
+                .outstandingAmount(transaction.getOutstandingAmount())
+                .paymentStatus(transaction.getPaymentStatus())
+                .paymentMethod(transaction.getPaymentMethod())
                 .transactionDate(transaction.getTransactionDate())
                 .notes(transaction.getNotes())
                 .items(itemResponses)

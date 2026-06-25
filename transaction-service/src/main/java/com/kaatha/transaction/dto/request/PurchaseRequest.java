@@ -25,4 +25,10 @@ public class PurchaseRequest {
     private List<PurchaseItemRequest> items;
 
     private String notes;
+
+    private java.math.BigDecimal tax;
+    private java.math.BigDecimal discount;
+    private String paymentStatus; // PAID or PENDING
+    private String paymentMethod;
+    private java.math.BigDecimal amountPaid;
 }

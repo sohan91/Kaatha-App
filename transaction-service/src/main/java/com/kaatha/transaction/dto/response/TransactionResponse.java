@@ -17,6 +17,16 @@ public class TransactionResponse {
     private Long customerId;
     private BigDecimal amount;
     private String type;
+    private String transactionNumber;
+    private String invoiceNumber;
+    private BigDecimal subtotal;
+    private BigDecimal tax;
+    private BigDecimal discount;
+    private BigDecimal finalAmount;
+    private BigDecimal amountPaid;
+    private BigDecimal outstandingAmount;
+    private String paymentStatus;
+    private String paymentMethod;
     private LocalDateTime transactionDate;
     private String notes;
     private List<TransactionItemResponse> items;

@@ -20,7 +20,7 @@ public abstract class PersonEntity extends BaseEntity {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "phone_number", nullable = false, unique = true)
+    @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
 
     @Column(name = "email")

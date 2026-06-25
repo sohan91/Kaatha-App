@@ -23,13 +23,18 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String phoneNumber) {
+    public String generateToken(String phoneNumber, String userType) {
         return Jwts.builder()
                 .subject(phoneNumber)
+                .claim("userType", userType)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String generateToken(String phoneNumber) {
+        return generateToken(phoneNumber, "CUSTOMER");
     }
 
     public String generateRefreshToken(String phoneNumber) {
@@ -47,6 +52,18 @@ public class JwtUtil {
 
     public boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
+    }
+
+    public String extractUserType(String token) {
+        return extractClaim(token, claims -> claims.get("userType", String.class));
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public boolean validateToken(String token, String phoneNumber) {

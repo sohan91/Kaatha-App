@@ -1,5 +1,6 @@
 package com.kaatha.notification.service.impl;
 
+import com.kaatha.notification.controller.RealtimeNotificationController;
 import com.kaatha.notification.dto.request.NotificationRequest;
 import com.kaatha.notification.dto.response.NotificationResponse;
 import com.kaatha.notification.entity.Notification;
@@ -33,6 +34,16 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         Notification saved = notificationRepository.save(notification);
+
+        RealtimeNotificationController.broadcast(request.getRecipientPhone(),
+                NotificationResponse.builder()
+                        .id(saved.getId())
+                        .recipientPhone(saved.getRecipientPhone())
+                        .message(saved.getMessage())
+                        .type(saved.getType())
+                        .sentAt(saved.getSentAt())
+                        .createdAt(saved.getCreatedAt())
+                        .build());
 
         return NotificationResponse.builder()
                 .id(saved.getId())

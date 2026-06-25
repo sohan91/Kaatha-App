@@ -1,5 +1,4 @@
 -- Kaatha Platform - Database Initialization Script
--- Creates all required schemas for each microservice
 
 CREATE DATABASE IF NOT EXISTS auth_db;
 CREATE DATABASE IF NOT EXISTS shopkeeper_db;
@@ -8,3 +7,5 @@ CREATE DATABASE IF NOT EXISTS item_db;
 CREATE DATABASE IF NOT EXISTS transaction_db;
 CREATE DATABASE IF NOT EXISTS ledger_db;
 CREATE DATABASE IF NOT EXISTS notification_db;
+CREATE DATABASE IF NOT EXISTS payment_db;
+CREATE DATABASE IF NOT EXISTS invoice_db;

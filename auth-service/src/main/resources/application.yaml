@@ -23,6 +23,11 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
 eureka:
   client:
     service-url:
@@ -42,6 +47,10 @@ feign:
 jwt:
   secret: mySuperSecretKeyForKaathaApp1234567890
   expiration: 3600000   # 1 hour in ms
+
+otp:
+  expiry-minutes: 5
+  max-attempts: 5
 
 logging:
   level:

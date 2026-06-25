@@ -54,6 +54,26 @@ spring:
               predicates:
                 - Path=/notifications/**
 
+            - id: payment-service
+              uri: lb://PAYMENT-SERVICE
+              predicates:
+                - Path=/payments/**
+
+            - id: invoice-service
+              uri: lb://INVOICE-SERVICE
+              predicates:
+                - Path=/invoices/**
+
+            - id: report-service
+              uri: lb://REPORT-SERVICE
+              predicates:
+                - Path=/reports/**
+
+            - id: shop-service
+              uri: lb://SHOPKEEPER-SERVICE
+              predicates:
+                - Path=/shop/**
+
 eureka:
   client:
     service-url:
@@ -61,3 +81,6 @@ eureka:
 
   instance:
     prefer-ip-address: true
+
+jwt:
+  secret: mySuperSecretKeyForKaathaApp1234567890
