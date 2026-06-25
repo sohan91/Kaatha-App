@@ -1,0 +1,17 @@
+com\kaatha\notification\entity\base\BaseEntity.class
+com\kaatha\notification\dto\request\NotificationRequest.class
+com\kaatha\notification\repository\NotificationRepository.class
+com\kaatha\notification\entity\Notification$NotificationBuilder.class
+com\kaatha\notification\service\impl\NotificationServiceImpl.class
+com\kaatha\notification\dto\response\ApiResponse$ApiResponseBuilder.class
+com\kaatha\notification\dto\request\NotificationRequest$NotificationRequestBuilder.class
+com\kaatha\notification\dto\response\ApiResponse.class
+com\kaatha\notification\exception\GlobalExceptionHandler.class
+com\kaatha\notification\controller\NotificationController.class
+com\kaatha\notification\entity\Notification$NotificationBuilderImpl.class
+com\kaatha\notification\entity\base\BaseEntity$BaseEntityBuilder.class
+com\kaatha\notification\dto\response\NotificationResponse.class
+com\kaatha\notification\entity\Notification.class
+com\kaatha\notification\service\NotificationService.class
+com\kaatha\notification\NotificationServiceApplication.class
+com\kaatha\notification\dto\response\NotificationResponse$NotificationResponseBuilder.class

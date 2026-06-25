@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kaatha — Digital Credit Ledger</title>
+  <meta name="description" content="Kaatha is a digital credit ledger platform for retail businesses — manage customers, items, credit purchases, and payments in one place." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+
+<!-- ===================== AUTH SCREEN ===================== -->
+<div id="auth-screen" class="screen active">
+  <div class="auth-bg">
+    <div class="auth-glow glow-1"></div>
+    <div class="auth-glow glow-2"></div>
+    <div class="auth-glow glow-3"></div>
+  </div>
+  <div class="auth-container">
+    <div class="auth-brand">
+      <div class="brand-logo">
+        <span class="logo-icon">📖</span>
+      </div>
+      <h1 class="brand-name">Kaatha</h1>
+      <p class="brand-tagline">Digital Credit Ledger for Modern Retail</p>
+    </div>
+
+    <div class="auth-card glass-card">
+      <!-- Role Tabs -->
+      <div class="role-tabs" id="role-tabs">
+        <button class="role-tab active" id="tab-shopkeeper" data-role="SHOPKEEPER" onclick="switchRole('SHOPKEEPER')">
+          <span class="tab-icon">🏪</span> Shopkeeper
+        </button>
+        <button class="role-tab" id="tab-customer" data-role="CUSTOMER" onclick="switchRole('CUSTOMER')">
+          <span class="tab-icon">👤</span> Customer
+        </button>
+      </div>
+
+      <!-- Phone Step -->
+      <div id="step-phone" class="auth-step active">
+        <h2 class="auth-title">Welcome back</h2>
+        <p class="auth-subtitle">Enter your phone number to receive an OTP</p>
+        <div class="input-group">
+          <span class="input-prefix">+91</span>
+          <input type="tel" id="phone-input" class="auth-input" placeholder="9876543210" maxlength="10" oninput="handlePhoneInput(this)" />
+        </div>
+        <button class="btn btn-primary btn-full" id="send-otp-btn" onclick="sendOtp()" disabled>
+          <span class="btn-text">Send OTP</span>
+          <span class="btn-loader hidden">⟳</span>
+        </button>
+        <p class="auth-note">No password needed. OTP-based secure login.</p>
+      </div>
+
+      <!-- OTP Step -->
+      <div id="step-otp" class="auth-step">
+        <h2 class="auth-title">Verify OTP</h2>
+        <p class="auth-subtitle">Enter the 6-digit code sent to <span id="otp-phone-display" class="highlight"></span></p>
+        <div class="otp-inputs" id="otp-inputs">
+          <input type="tel" class="otp-box" maxlength="1" oninput="otpBoxInput(this,0)" onkeydown="otpBoxKeydown(event,0)" id="otp-0" />
+          <input type="tel" class="otp-box" maxlength="1" oninput="otpBoxInput(this,1)" onkeydown="otpBoxKeydown(event,1)" id="otp-1" />
+          <input type="tel" class="otp-box" maxlength="1" oninput="otpBoxInput(this,2)" onkeydown="otpBoxKeydown(event,2)" id="otp-2" />
+          <input type="tel" class="otp-box" maxlength="1" oninput="otpBoxInput(this,3)" onkeydown="otpBoxKeydown(event,3)" id="otp-3" />
+          <input type="tel" class="otp-box" maxlength="1" oninput="otpBoxInput(this,4)" onkeydown="otpBoxKeydown(event,4)" id="otp-4" />
+          <input type="tel" class="otp-box" maxlength="1" oninput="otpBoxInput(this,5)" onkeydown="otpBoxKeydown(event,5)" id="otp-5" />
+        </div>
+        <button class="btn btn-primary btn-full" id="verify-otp-btn" onclick="verifyOtp()">
+          <span class="btn-text">Verify & Login</span>
+        </button>
+        <button class="btn btn-ghost btn-full" onclick="backToPhone()">← Change number</button>
+      </div>
+
+      <div id="auth-error" class="auth-error hidden"></div>
+    </div>
+
+    <p class="auth-footer">Kaatha Platform v1.0 · Built for Indian Retail Businesses</p>
+  </div>
+</div>
+
+<!-- ===================== SHOPKEEPER DASHBOARD ===================== -->
+<div id="shopkeeper-dashboard" class="screen">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="logo-icon">📖</span>
+      <span class="sidebar-brand-name">Kaatha</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="showSection('sk-overview', this)">
+        <span class="nav-icon">📊</span><span class="nav-label">Overview</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('sk-customers', this)">
+        <span class="nav-icon">👥</span><span class="nav-label">Customers</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('sk-items', this)">
+        <span class="nav-icon">📦</span><span class="nav-label">Inventory</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('sk-transactions', this)">
+        <span class="nav-icon">💳</span><span class="nav-label">Transactions</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('sk-ledger', this)">
+        <span class="nav-icon">📒</span><span class="nav-label">Ledger</span>
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-badge">
+        <div class="user-avatar">SK</div>
+        <div class="user-info">
+          <span class="user-name" id="sk-user-name">Shopkeeper</span>
+          <span class="user-role">Shopkeeper Account</span>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+        <h1 class="page-title" id="sk-page-title">Dashboard Overview</h1>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+        <div class="notification-bell" title="Notifications">🔔</div>
+      </div>
+    </header>
+
+    <!-- ---- OVERVIEW SECTION ---- -->
+    <section id="sk-overview" class="dashboard-section active">
+      <div class="stats-grid">
+        <div class="stat-card glass-card">
+          <div class="stat-icon-wrap emerald"><span class="stat-icon">👥</span></div>
+          <div class="stat-body">
+            <span class="stat-label">Total Customers</span>
+            <span class="stat-value" id="sk-stat-customers">—</span>
+          </div>
+        </div>
+        <div class="stat-card glass-card">
+          <div class="stat-icon-wrap amber"><span class="stat-icon">📦</span></div>
+          <div class="stat-body">
+            <span class="stat-label">Items in Catalog</span>
+            <span class="stat-value" id="sk-stat-items">—</span>
+          </div>
+        </div>
+        <div class="stat-card glass-card">
+          <div class="stat-icon-wrap red"><span class="stat-icon">💰</span></div>
+          <div class="stat-body">
+            <span class="stat-label">Total Outstanding</span>
+            <span class="stat-value" id="sk-stat-outstanding">—</span>
+          </div>
+        </div>
+        <div class="stat-card glass-card">
+          <div class="stat-icon-wrap blue"><span class="stat-icon">💳</span></div>
+          <div class="stat-body">
+            <span class="stat-label">Transactions Today</span>
+            <span class="stat-value" id="sk-stat-txns">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col-grid">
+        <div class="glass-card card-padded">
+          <div class="card-header-row">
+            <h3 class="card-title">Recent Transactions</h3>
+            <button class="btn btn-ghost btn-sm" onclick="showSection('sk-transactions', document.querySelector('[onclick=\'showSection(\\\'sk-transactions\\\', this)\']'))">View all</button>
+          </div>
+          <div id="sk-recent-txns" class="txn-list">
+            <div class="empty-state">No transactions yet</div>
+          </div>
+        </div>
+        <div class="glass-card card-padded">
+          <div class="card-header-row">
+            <h3 class="card-title">Top Debtors</h3>
+          </div>
+          <div id="sk-top-debtors" class="debtor-list">
+            <div class="empty-state">No ledger data yet</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- CUSTOMERS SECTION ---- -->
+    <section id="sk-customers" class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title">Customer Management</h2>
+        <button class="btn btn-primary" onclick="openModal('add-customer-modal')">+ Add Customer</button>
+      </div>
+      <div class="glass-card">
+        <div class="table-toolbar">
+          <input type="text" class="search-input" placeholder="🔍 Search customers..." oninput="filterTable(this, 'customers-table')" />
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="customers-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Phone</th><th>Outstanding (₹)</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customers-tbody">
+              <tr><td colspan="4" class="table-empty">No customers yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- INVENTORY SECTION ---- -->
+    <section id="sk-items" class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title">Item Catalog</h2>
+        <button class="btn btn-primary" onclick="openModal('add-item-modal')">+ Add Item</button>
+      </div>
+      <div class="glass-card">
+        <div class="table-toolbar">
+          <input type="text" class="search-input" placeholder="🔍 Search items..." oninput="filterTable(this, 'items-table')" />
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="items-table">
+            <thead>
+              <tr>
+                <th>Item Name</th><th>SKU</th><th>Price (₹)</th><th>Stock</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="items-tbody">
+              <tr><td colspan="6" class="table-empty">No items in catalog</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- TRANSACTIONS SECTION ---- -->
+    <section id="sk-transactions" class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title">Transactions</h2>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="openModal('purchase-modal')">📦 New Purchase</button>
+          <button class="btn btn-emerald" onclick="openModal('payment-modal')">💰 Record Payment</button>
+        </div>
+      </div>
+      <div class="glass-card">
+        <div class="table-toolbar">
+          <input type="text" class="search-input" placeholder="🔍 Filter transactions..." oninput="filterTable(this, 'txns-table')" />
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="txns-table">
+            <thead>
+              <tr>
+                <th>Date</th><th>Customer ID</th><th>Type</th><th>Amount (₹)</th><th>Notes</th><th>Items</th>
+              </tr>
+            </thead>
+            <tbody id="txns-tbody">
+              <tr><td colspan="6" class="table-empty">No transactions recorded</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- LEDGER SECTION ---- -->
+    <section id="sk-ledger" class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title">Customer Ledgers</h2>
+      </div>
+      <div class="glass-card">
+        <div class="table-wrapper">
+          <table class="data-table" id="ledger-table">
+            <thead>
+              <tr>
+                <th>Customer ID</th><th>Outstanding (₹)</th><th>Last Transaction</th><th>Type</th><th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="ledger-tbody">
+              <tr><td colspan="5" class="table-empty">No ledger entries yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ===================== CUSTOMER DASHBOARD ===================== -->
+<div id="customer-dashboard" class="screen">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="logo-icon">📖</span>
+      <span class="sidebar-brand-name">Kaatha</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="showCustSection('cust-balances', this)">
+        <span class="nav-icon">💳</span><span class="nav-label">My Balances</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showCustSection('cust-history', this)">
+        <span class="nav-icon">📋</span><span class="nav-label">History</span>
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-badge">
+        <div class="user-avatar cust-avatar">C</div>
+        <div class="user-info">
+          <span class="user-name" id="cust-user-name">Customer</span>
+          <span class="user-role">Customer Account</span>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+        <h1 class="page-title">My Credit Account</h1>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="cust-topbar-date"></span>
+      </div>
+    </header>
+
+    <!-- ---- MY BALANCES ---- -->
+    <section id="cust-balances" class="dashboard-section active">
+      <div class="section-header">
+        <h2 class="section-title">Outstanding Balances</h2>
+      </div>
+      <div id="cust-balance-cards" class="balance-cards-grid">
+        <div class="empty-state glass-card card-padded">Loading your balances...</div>
+      </div>
+    </section>
+
+    <!-- ---- TRANSACTION HISTORY ---- -->
+    <section id="cust-history" class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title">Transaction History</h2>
+      </div>
+      <div class="glass-card">
+        <div class="table-wrapper">
+          <table class="data-table" id="cust-txns-table">
+            <thead>
+              <tr>
+                <th>Date</th><th>Shop ID</th><th>Type</th><th>Amount (₹)</th><th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="cust-txns-tbody">
+              <tr><td colspan="5" class="table-empty">No transactions found</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- Add Customer Modal -->
+<div class="modal-overlay" id="add-customer-modal">
+  <div class="modal glass-card">
+    <div class="modal-header">
+      <h3 class="modal-title">Add New Customer</h3>
+      <button class="modal-close" onclick="closeModal('add-customer-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name *</label>
+          <input type="text" class="form-input" id="cust-fname" placeholder="First name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input type="text" class="form-input" id="cust-lname" placeholder="Last name" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number *</label>
+        <input type="tel" class="form-input" id="cust-phone" placeholder="10-digit mobile number" maxlength="10" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="cust-email" placeholder="email@example.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input type="text" class="form-input" id="cust-address" placeholder="Customer address" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-customer-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addCustomer()">Add Customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal-overlay" id="add-item-modal">
+  <div class="modal glass-card">
+    <div class="modal-header">
+      <h3 class="modal-title">Add Item to Catalog</h3>
+      <button class="modal-close" onclick="closeModal('add-item-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Item Name *</label>
+        <input type="text" class="form-input" id="item-name" placeholder="e.g. Basmati Rice 5kg" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input type="text" class="form-input" id="item-desc" placeholder="Short description" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Price (₹) *</label>
+          <input type="number" class="form-input" id="item-price" placeholder="0.00" step="0.01" min="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">SKU</label>
+          <input type="text" class="form-input" id="item-sku" placeholder="Product code" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock Quantity *</label>
+        <input type="number" class="form-input" id="item-stock" placeholder="e.g. 100" min="0" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-item-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addItem()">Add Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Purchase Modal -->
+<div class="modal-overlay" id="purchase-modal">
+  <div class="modal modal-wide glass-card">
+    <div class="modal-header">
+      <h3 class="modal-title">📦 Record Credit Purchase</h3>
+      <button class="modal-close" onclick="closeModal('purchase-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Customer ID *</label>
+        <input type="number" class="form-input" id="purchase-customer-id" placeholder="Customer ID" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input type="text" class="form-input" id="purchase-notes" placeholder="Optional notes" />
+      </div>
+      <div class="purchase-items-header">
+        <h4 class="section-subtitle">Items</h4>
+        <button class="btn btn-ghost btn-sm" onclick="addPurchaseItemRow()">+ Add Item</button>
+      </div>
+      <div id="purchase-items-container">
+        <!-- rows added dynamically -->
+      </div>
+      <div class="purchase-total-row">
+        <span class="total-label">Total Amount:</span>
+        <span class="total-value" id="purchase-total">₹ 0.00</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('purchase-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitPurchase()">Record Purchase</button>
+    </div>
+  </div>
+</div>
+
+<!-- Record Payment Modal -->
+<div class="modal-overlay" id="payment-modal">
+  <div class="modal glass-card">
+    <div class="modal-header">
+      <h3 class="modal-title">💰 Record Payment</h3>
+      <button class="modal-close" onclick="closeModal('payment-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Customer ID *</label>
+        <input type="number" class="form-input" id="payment-customer-id" placeholder="Customer ID" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Payment Amount (₹) *</label>
+        <input type="number" class="form-input" id="payment-amount" placeholder="0.00" step="0.01" min="0.01" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input type="text" class="form-input" id="payment-notes" placeholder="Optional notes" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('payment-modal')">Cancel</button>
+      <button class="btn btn-emerald" onclick="submitPayment()">Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast hidden">
+  <span id="toast-icon">✓</span>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
