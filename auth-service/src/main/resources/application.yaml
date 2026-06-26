@@ -56,3 +56,15 @@ logging:
   level:
     org.springframework.web: DEBUG
     com.kaatha: DEBUG
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,prometheus"
+  endpoint:
+    prometheus:
+      enabled: true
+twilio:
+  accountSid: ${TWILIO_ACCOUNT_SID}
+  authToken: ${TWILIO_AUTH_TOKEN}
+  phoneNumber: ${TWILIO_PHONE_NUMBER}

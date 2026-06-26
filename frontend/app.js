@@ -142,6 +142,7 @@ async function verifyOtp() {
     });
 
     const result = await res.json();
+    console.log("Result is: ",result);
     if (result.success) {
       const data = result.data;
       authState.token = data.token;

@@ -71,6 +71,8 @@ public class TransactionController {
                         .data(response)
                         .build()
         );
+    } // <-- Added missing closing brace here
+
     @GetMapping("/shopkeeper/{shopkeeperId}/today-collections")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTodayCollections(
             @PathVariable Long shopkeeperId) {

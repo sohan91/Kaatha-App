@@ -65,6 +65,8 @@ public class DashboardService {
             Long customerId = toLong(shop.get("customerId"));
             Long shopkeeperId = toLong(shop.get("shopkeeperId"));
 
+            if (customerId == null || shopkeeperId == null) continue;
+
             List<Map<String, Object>> ledgers = safeList(ledgerClient.getLedgersByCustomer(customerId));
             for (Map<String, Object> ledger : ledgers) {
                 if (shopkeeperId.equals(toLong(ledger.get("shopkeeperId")))) {
@@ -87,11 +89,11 @@ public class DashboardService {
                     .toList());
         }
 
-        List<Object> notifications = safeList(notificationClient.getByPhone(phone)).stream()
+        List<Object> notifications = safeList(notificationClient.getByPhone(phoneNumber)).stream()
                 .map(n -> (Object) n)
                 .toList();
 
-        Object profile = shops.isEmpty() ? null : shops.getFirst();
+        Object profile = shops.isEmpty() ? null : shops.get(0); // Safely replaced .getFirst() if using older Java versions, otherwise getFirst() is fine for Java 21+
 
         return CustomerDashboardResponse.builder()
                 .profile(profile)
@@ -113,23 +115,35 @@ public class DashboardService {
         if (response == null || response.getData() == null) {
             return List.of();
         }
-        return (List<Map<String, Object>>) response.getData();
+        // Added instanceof check to prevent ClassCastException
+        if (response.getData() instanceof List) {
+            return (List<Map<String, Object>>) response.getData();
+        }
+        return List.of();
     }
 
     private BigDecimal toBigDecimal(Object value) {
-        if (value == null) {
+        if (value == null || value.toString().trim().isEmpty()) {
             return BigDecimal.ZERO;
         }
-        return new BigDecimal(value.toString());
+        try {
+            return new BigDecimal(value.toString());
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO; // Fallback safely
+        }
     }
 
     private Long toLong(Object value) {
-        if (value == null) {
+        if (value == null || value.toString().trim().isEmpty()) {
             return null;
         }
         if (value instanceof Number number) {
             return number.longValue();
         }
-        return Long.parseLong(value.toString());
+        try {
+            return Long.parseLong(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

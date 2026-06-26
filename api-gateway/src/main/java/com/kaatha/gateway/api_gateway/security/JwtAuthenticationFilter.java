@@ -20,7 +20,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/auth/send-otp",
             "/auth/verify-otp",
             "/auth/refresh",
-            "/shopkeepers/register",
+            "/shopkeepers/**",
             "/payments/webhook",
             "/actuator"
     );

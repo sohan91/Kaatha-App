@@ -1,0 +1,16 @@
+com\kaatha\report\dto\response\CustomerDashboardResponse$ShopOutstanding.class
+com\kaatha\report\feign\CustomerClient.class
+com\kaatha\report\dto\response\CustomerDashboardResponse$ShopOutstanding$ShopOutstandingBuilder.class
+com\kaatha\report\dto\response\ApiResponse.class
+com\kaatha\report\feign\LedgerClient.class
+com\kaatha\report\feign\TransactionClient.class
+com\kaatha\report\controller\DashboardController.class
+com\kaatha\report\feign\NotificationClient.class
+com\kaatha\report\dto\response\CustomerDashboardResponse$CustomerDashboardResponseBuilder.class
+com\kaatha\report\feign\InvoiceClient.class
+com\kaatha\report\ReportServiceApplication.class
+com\kaatha\report\dto\response\ShopkeeperDashboardResponse$ShopkeeperDashboardResponseBuilder.class
+com\kaatha\report\dto\response\ShopkeeperDashboardResponse.class
+com\kaatha\report\service\DashboardService.class
+com\kaatha\report\dto\response\CustomerDashboardResponse.class
+com\kaatha\report\dto\response\ApiResponse$ApiResponseBuilder.class

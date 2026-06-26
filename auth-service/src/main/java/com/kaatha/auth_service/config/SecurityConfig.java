@@ -17,7 +17,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/send-otp",
-                                "/auth/verify-otp"
+                                "/auth/verify-otp",
+                                "/actuator/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -46,6 +46,7 @@ public class OtpService {
     }
 
     public boolean verify(String phoneNumber, String otp) {
+        log.info("OTP from Redis: {}",redisTemplate.opsForValue().get(OTP_PREFIX+phoneNumber));
         String stored = redisTemplate.opsForValue().get(OTP_PREFIX + phoneNumber);
         if (stored == null || !stored.equals(otp)) {
             return false;

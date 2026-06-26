@@ -1,0 +1,12 @@
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\controller\NotificationController.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\controller\RealtimeNotificationController.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\dto\request\NotificationRequest.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\dto\response\ApiResponse.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\dto\response\NotificationResponse.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\entity\base\BaseEntity.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\entity\Notification.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\exception\GlobalExceptionHandler.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\NotificationServiceApplication.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\repository\NotificationRepository.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\service\impl\NotificationServiceImpl.java
+C:\Users\Sohan\OneDrive\Desktop\KaathaApplication\notification-service\src\main\java\com\kaatha\notification\service\NotificationService.java

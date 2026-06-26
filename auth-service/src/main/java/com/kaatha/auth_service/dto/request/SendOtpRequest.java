@@ -21,5 +21,5 @@ public class SendOtpRequest {
     @NotNull(message = "User type is required")
     private UserType userType;
 
-    private Boolean forRegistration;
+    private UserType forRegistration;
 }

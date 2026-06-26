@@ -18,10 +18,13 @@ import com.kaatha.auth_service.repository.UserSessionRepository;
 import com.kaatha.auth_service.security.JwtUtil;
 import com.kaatha.auth_service.service.AuthService;
 import com.kaatha.auth_service.service.OtpService;
+import com.twilio.rest.api.v2010.account.Message;
+
+import com.twilio.type.PhoneNumber;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,6 +32,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
+    @Value("${twilio.phone-number}")
+    private String twilioPhoneNumber;
 
     private final CustomerClient customerClient;
     private final ShopkeeperClient shopkeeperClient;
@@ -58,11 +64,23 @@ public class AuthServiceImpl implements AuthService {
         String otp = otpService.generateAndStore(request.getPhoneNumber());
 
         try {
-            notificationClient.sendNotification(NotificationRequest.builder()
-                    .recipientPhone(request.getPhoneNumber())
-                    .message("Your Kaatha OTP is: " + otp + ". Valid for 5 minutes.")
-                    .type("OTP")
-                    .build());
+            String toPhone = "+91"+request.getPhoneNumber();
+            String messageBody =
+                    "Kaatha OTP: " + otp +
+                            "\nValid for 5 minutes. Do not share it with anyone.";
+
+            Message.creator(
+                    new PhoneNumber(toPhone),
+                    new PhoneNumber(twilioPhoneNumber),
+                    messageBody
+            ).create();
+
+
+//            notificationClient.sendNotification(NotificationRequest.builder()
+//                    .recipientPhone(request.getPhoneNumber())
+//                    .message("Your Kaatha OTP is: " + otp + ". Valid for 5 minutes.")
+//                    .type("OTP")
+//                    .build());
         } catch (Exception e) {
             log.warn("Failed to send OTP via notification service, OTP logged for dev", e);
             log.info("DEV OTP for {} = {}", request.getPhoneNumber(), otp);
@@ -73,6 +91,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse verifyOtp(VerifyOtpRequest request) {
+        log.info("Received OTP is: {},Role is : {} ",request.getOtp(),request.getUserType());
         if (!otpService.verify(request.getPhoneNumber(), request.getOtp())) {
             throw new InvalidOtpException("Invalid or expired OTP");
         }
