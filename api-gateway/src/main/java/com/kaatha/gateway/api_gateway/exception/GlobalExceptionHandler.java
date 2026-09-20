@@ -1,4 +1,4 @@
-package com.kaatha.gateway.exception;
+package com.kaatha.gateway.api_gateway.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

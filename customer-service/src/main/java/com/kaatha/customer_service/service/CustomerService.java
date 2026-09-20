@@ -4,6 +4,7 @@ import com.kaatha.customer_service.dto.request.RegisterCustomerRequest;
 import com.kaatha.customer_service.dto.request.SetDefaultShopRequest;
 import com.kaatha.customer_service.dto.response.CustomerResponse;
 import com.kaatha.customer_service.dto.response.CustomerShopSummaryResponse;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
@@ -27,5 +28,11 @@ public interface CustomerService {
 
     void setDefaultShopkeeper(SetDefaultShopRequest request);
 
-    List<CustomerResponse> searchCustomers(Long shopkeeperId, String query);
+    @Query("""
+       SELECT c
+       FROM shopkeeper as s
+       JOIN customer as c
+       WHERE s.shopkeeper_id = :shopkeeperId
+       """)
+    List<Customer> searchCustomers(Long shopkeeperId);
 }

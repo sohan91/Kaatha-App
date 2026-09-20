@@ -74,13 +74,23 @@ services:
     container_name: kaatha-auth
     ports:
       - "8083:8083"
+
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/auth_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
+
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+
+      - JWT_SECRET=${JWT_SECRET}
+
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+
     depends_on:
       mysql:
         condition: service_healthy
@@ -88,6 +98,7 @@ services:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
+
     logging:
       options:
         tag: "auth-service"

@@ -11,4 +11,5 @@ public interface ShopkeeperClient {
     Boolean existsByPhoneNumber(
             @PathVariable String phoneNumber
     );
+
 }

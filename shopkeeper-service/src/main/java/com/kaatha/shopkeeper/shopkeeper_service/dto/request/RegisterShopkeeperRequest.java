@@ -27,6 +27,7 @@ public class RegisterShopkeeperRequest {
     private String state;
     private String pincode;
     private String gstNumber;
+    
     private String shopCategory;
 
     @NotBlank(message = "Account holder name is required")

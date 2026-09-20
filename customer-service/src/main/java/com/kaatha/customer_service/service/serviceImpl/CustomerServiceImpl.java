@@ -8,6 +8,7 @@ import com.kaatha.customer_service.entity.Customer;
 import com.kaatha.customer_service.entity.CustomerPreference;
 import com.kaatha.customer_service.exception.CustomerAlreadyExistsException;
 import com.kaatha.customer_service.exception.CustomerNotFoundException;
+import com.kaatha.customer_service.feign.ShopkeeperClient;
 import com.kaatha.customer_service.mapper.CustomerMapper;
 import com.kaatha.customer_service.repository.CustomerPreferenceRepository;
 import com.kaatha.customer_service.repository.CustomerRepository;
@@ -24,6 +25,7 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerPreferenceRepository preferenceRepository;
     private final CustomerMapper customerMapper;
+    private final ShopkeeperClient shopkeeperClient;
 
     @Override
     public CustomerResponse registerCustomer(RegisterCustomerRequest request) {
@@ -121,9 +123,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public List<CustomerResponse> searchCustomers(Long shopkeeperId, String query) {
-        return customerRepository.searchByShopkeeper(shopkeeperId, query).stream()
-                .map(customerMapper::toResponse)
-                .toList();
+    public List<Customer> searchCustomers(Long shopkeeperId) {
+        return customerRepository.searchByShopkeeper(shopkeeperClient.findIdShopKeeper(shopkeeperId));
     }
 }

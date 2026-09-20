@@ -12,10 +12,13 @@ import com.kaatha.shopkeeper.shopkeeper_service.mapper.ShopkeeperMapper;
 import com.kaatha.shopkeeper.shopkeeper_service.repository.ShopkeeperRepository;
 import com.kaatha.shopkeeper.shopkeeper_service.service.ShopkeeperService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ShopkeeperServiceImpl
@@ -139,6 +142,13 @@ public class ShopkeeperServiceImpl
         Shopkeeper shopkeeper = shopkeeperRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new ShopkeeperNotFoundException("Shopkeeper not found with phone: " + phoneNumber));
         return shopkeeperMapper.toResponse(shopkeeper);
+    }
+
+    @Override
+    public Optional<Long> findIdByPhoneNumberShopKeeper(String phoneNumber)
+    {
+        Optional<Shopkeeper> shopkeeper = shopkeeperRepository.findByPhoneNumber(phoneNumber);
+        return shopkeeper.get().getId().describeConstable();
     }
 
 }

@@ -4,9 +4,8 @@ server:
 spring:
   application:
     name: SHOPKEEPER-SERVICE
-
   datasource:
-    url: jdbc:mysql://localhost:3306/shopkeeper_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://127.0.0.1:3309/shopkeeper_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver

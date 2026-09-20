@@ -7,12 +7,16 @@ import com.kaatha.shopkeeper.shopkeeper_service.dto.response.ShopkeeperResponse;
 import com.kaatha.shopkeeper.shopkeeper_service.service.ShopkeeperService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
 
+@Slf4j
 @RestController
 @RequestMapping("/shopkeepers")
 @RequiredArgsConstructor
@@ -113,6 +117,14 @@ public class ShopkeeperController {
                         .data(response)
                         .build()
         );
+    }
+
+    @GetMapping("/api/phone/{phoneNumber}")
+    public ResponseEntity<Optional<Long>> findIdShopKeeper(@Valid @PathVariable String phoneNumber)
+    {
+          Optional<Long> id = shopkeeperService.findIdByPhoneNumberShopKeeper(phoneNumber);
+          log.info("Id is: {}",id);
+          return ResponseEntity.status(HttpStatus.OK).body(id);
     }
 
 }

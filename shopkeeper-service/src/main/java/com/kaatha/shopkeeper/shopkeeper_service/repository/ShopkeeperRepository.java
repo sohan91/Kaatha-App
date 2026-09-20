@@ -11,7 +11,6 @@ public interface ShopkeeperRepository
         extends JpaRepository<Shopkeeper, Long> {
 
     boolean existsByPhoneNumber(String phoneNumber);
-
     Optional<Shopkeeper> findByPhoneNumber(String phoneNumber);
 
 }

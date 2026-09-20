@@ -6,6 +6,7 @@ import com.kaatha.shopkeeper.shopkeeper_service.dto.request.UpdateShopkeeperRequ
 import com.kaatha.shopkeeper.shopkeeper_service.dto.response.ShopkeeperResponse;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ShopkeeperService {
 
@@ -20,4 +21,5 @@ public interface ShopkeeperService {
     boolean existsByPhoneNumber(String phoneNumber);
     boolean findShopkeeperById(Long Id);
     ShopkeeperResponse getShopkeeperByPhone(String phoneNumber);
+    Optional<Long> findIdByPhoneNumberShopKeeper(String phoneNumber);
 }

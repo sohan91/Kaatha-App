@@ -128,7 +128,7 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.builder()
                 .success(true)
                 .message("Search results")
-                .data(customerService.searchCustomers(shopkeeperId, query))
+                .data(customerService.searchCustomers(shopkeeperId))
                 .build());
     }
 }
